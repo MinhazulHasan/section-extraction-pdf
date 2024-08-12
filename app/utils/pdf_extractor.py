@@ -9,15 +9,15 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
 
     # Define patterns for each section using regular expressions
     patterns = {
-        "Type": r"Type:\s*(.*?)\s*(?=\bTerm\b)",
-        "Term": r"Term:\s*(.*?)\s*(?=\b(Objective|Objectives)\b)",
-        "Objective": r"Objective[s]?:\s*(.*?)\s*(?=\b(Intended investor|Dealing Frequency)\b|\bWhat are the risks\b)",
-        "Intended Investor": r"Intended\s*(?:investor|Retail\s*Investor):\s*(.*?)\s*(?=\bWhat are the risks\b)",
-        "Risks and Returns": r"What are the risks and what could I get in return\?\s*(.*?)\s*(?=\bWhat happens if\b)",
-        "Payment Issues": r"What happens if.*?\s*(.*?)\s*(?=\bHow long should I hold it\b)",
-        "Holding Period": r"How long should I hold it and can I take money out early\?\s*(.*?)\s*(?=\bHow can I complain\b)",
-        "Complaints": r"How can I complain\?\s*(.*?)\s*(?=\bOther relevant information\b)",
-        "Other Information": r"Other relevant information\s*(.*)"
+        "PRIIPSKIDTypeOption": r"Type:\s*(.*?)\s*(?=\bTerm\b)",
+        "PRIIPsKIDTerm": r"Term:\s*(.*?)\s*(?=\b(Objective|Objectives)\b)",
+        "PRIIPsKIDObjective": r"Objective[s]?:\s*(.*?)\s*(?=\b(Intended investor|Dealing Frequency)\b|\bWhat are the risks\b)",
+        "PRIIPsKIDTargetMarket": r"Intended\s*(?:investor|Retail\s*Investor):\s*(.*?)\s*(?=\bWhat are the risks\b)",
+        "PRIIPsKIDOtherRisks": r"What are the risks and what could I get in return\?\s*(.*?)\s*(?=\bWhat happens if\b)",
+        "PRIIPsKIDUnableToPayOut": r"What happens if.*?\s*(.*?)\s*(?=\bWhat are the costs\b)",
+        "PRIIPsKIDTakeMoneyOutEarly": r"How long should I hold it and can I take money out early\?\s*(.*?)\s*(?=\bHow can I complain\b)",
+        "PRIIPsKIDComplaints": r"How can I complain\?\s*(.*?)\s*(?=\bOther relevant information\b)",
+        "PRIIPsKIDOtherInfoEU": r"Other relevant information\s*(.*)"
     }
 
     # Extract the sections
