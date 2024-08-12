@@ -65,7 +65,7 @@ async def get_pdf_tables(file: UploadFile = File(...)) -> ExtractedTables:
         category_key_map = {
             "Entry costs": "PRIIPsKIDEntryCostDescription",
             "Exit costs": "PRIIPsKIDExitCostDescription",
-            "Ongoing costs taken each year": "PRIIPsKIDOngoingCostsDescription",
+            "Management fees and other administrative or operating costs": "PRIIPsKIDOngoingCostsDescription",
             "Transaction costs": "PRIIPsKIDTransactionCostsDescription",
             "Performance fees": "PRIIPsKIDPerformanceFeesDescription"
         }
@@ -75,6 +75,8 @@ async def get_pdf_tables(file: UploadFile = File(...)) -> ExtractedTables:
             # Ensure each item is a list with at least two elements
             if isinstance(item, list) and len(item) >= 2:
                 category = item[0]
+                category = ' '.join(line.strip() for line in category.splitlines())
+
                 description = item[1]
                 # Get the corresponding key from the category_key_map
                 key = category_key_map.get(category)
