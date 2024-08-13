@@ -11,10 +11,9 @@ class ExtractedSections(BaseModel):
     PRIIPsKIDTakeMoneyOutEarly: str
     PRIIPsKIDComplaints: str
     PRIIPsKIDOtherInfoEU: str
-
-class ExtractedTables(BaseModel):
     PRIIPsKIDEntryCostDescription: str
     PRIIPsKIDExitCostDescription: str
     PRIIPsKIDOngoingCostsDescription: str
     PRIIPsKIDTransactionCostsDescription: str
     PRIIPsKIDPerformanceFeesDescription: str
+    
