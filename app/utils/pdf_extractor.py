@@ -7,6 +7,10 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
     pdf_stream = io.BytesIO(pdf_contents)
     extracted_text = extract_text(pdf_stream)
 
+    pattern = r'^.*[Pp]age\s*-\s*\d+\s*of\s*\d+.*$\n?'
+    extracted_text = re.sub(pattern, '', extracted_text, flags=re.MULTILINE)
+    extracted_text = extracted_text.strip()
+
     # Define patterns for each section using regular expressions
     patterns = {
         "PRIIPSKIDTypeOption": r"Type:\s*(.*?)\s*(?=\bTerm\b)",
