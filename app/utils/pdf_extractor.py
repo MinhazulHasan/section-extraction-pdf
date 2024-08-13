@@ -15,8 +15,8 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
     patterns = {
         "PRIIPSKIDTypeOption": r"Type:\s*(.*?)\s*(?=\bTerm\b)",
         "PRIIPsKIDTerm": r"Term:\s*(.*?)\s*(?=\b(Objective|Objectives)\b)",
-        "PRIIPsKIDObjective": r"Objective[s]?:\s*(.*?)\s*(?=\b(Intended investor|Dealing Frequency)\b|\bWhat are the risks\b)",
-        "PRIIPsKIDTargetMarket": r"Intended\s*(?:investor|Investor|Retail\s*Investor):\s*(.*?)\s*(?=\b(What are the risks|Purchase and Repurchase)\b)",
+        "PRIIPsKIDObjective": r"Objective[s]?:\s*(.*?)\s*(?=\b(Intended investor|Dealing Frequency|Fund Currency|Investment Policy)\b|\bWhat are the risks\b)",
+        "PRIIPsKIDTargetMarket": r"Intended\s*(?:investor|Investor|Retail\s*Investor):\s*(.*?)\s*(?=\b(What are the risks|Purchase and Repurchase|Risk Indicator)\b)",
         "PRIIPsKIDOtherRisks": r"What are the risks and what could I get in return\?\s*(.*?)\s*(?=\bWhat happens if\b)",
         "PRIIPsKIDUnableToPayOut": r"What happens if.*?\s*(.*?)\s*(?=\bWhat are the costs\b)",
         "PRIIPsKIDTakeMoneyOutEarly": r"How long should I hold it and can I take money out early\?\s*(.*?)\s*(?=\bHow can I complain\b)",
