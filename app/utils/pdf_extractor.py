@@ -2,14 +2,34 @@ from pdfminer.high_level import extract_text
 import re
 import io
 
+
+def clean_extracted_text(text: str) -> str:
+    # Remove page numbers or similar structured text
+    pattern = r'^.*[Pp]age\s*-\s*\d+\s*of\s*\d+.*$\n?'
+    text = re.sub(pattern, '', text, flags=re.MULTILINE)
+
+    # 1. Remove extra newlines
+    text = re.sub(r'\n+', '\n', text)
+    
+    # 2. Replace tabs with single space
+    text = re.sub(r'\t+', ' ', text)
+    
+    # 3. Remove special characters (keeping alphanumeric, space, and newline)
+    text = re.sub(r'[^a-zA-Z0-9\s\n]', '', text)
+
+    # Additional cleanup
+    text = re.sub(r' +', ' ', text)  # Remove multiple spaces
+    text = text.strip()
+
+    return text
+
+
+
 def extract_pdf_sections(pdf_contents: bytes) -> dict:
     # Extract text from the PDF
     pdf_stream = io.BytesIO(pdf_contents)
     extracted_text = extract_text(pdf_stream)
-
-    pattern = r'^.*[Pp]age\s*-\s*\d+\s*of\s*\d+.*$\n?'
-    extracted_text = re.sub(pattern, '', extracted_text, flags=re.MULTILINE)
-    extracted_text = extracted_text.strip()
+    extracted_text = clean_extracted_text(extracted_text)
 
     # Define patterns for each section using regular expressions
     patterns = {
