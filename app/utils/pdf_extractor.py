@@ -8,14 +8,14 @@ def clean_extracted_text(text: str) -> str:
     pattern = r'^.*[Pp]age\s*-\s*\d+\s*of\s*\d+.*$\n?'
     text = re.sub(pattern, '', text, flags=re.MULTILINE)
 
-    # 1. Remove extra newlines
+    # Remove extra newlines
     text = re.sub(r'\n+', '\n', text)
     
-    # 2. Replace tabs with single space
+    # Replace tabs with single space
     text = re.sub(r'\t+', ' ', text)
     
-    # 3. Remove special characters (keeping alphanumeric, space, and newline)
-    text = re.sub(r'[^a-zA-Z0-9\s\n]', '', text)
+    # Remove all non-ASCII characters (like emojis or icons)
+    text = re.sub(r'[^\x00-\x7F]+', '', text)
 
     # Additional cleanup
     text = re.sub(r' +', ' ', text)  # Remove multiple spaces
