@@ -8,7 +8,8 @@ def clean_extracted_text(text: str) -> str:
     pattern = r'^.*[Pp]age\s*-\s*\d+\s*of\s*\d+.*$\n?'
     text = re.sub(pattern, '', text, flags=re.MULTILINE)
 
-    # Remove extra newlines
+    # Remove extra newlines (including those with spaces between them)
+    text = re.sub(r'\s*\n\s*', '\n', text)
     text = re.sub(r'\n+', '\n', text)
     
     # Replace tabs with single space
