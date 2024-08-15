@@ -15,12 +15,12 @@ def clean_extracted_text(text: str) -> str:
     # Replace tabs with single space
     text = re.sub(r'\t+', ' ', text)
     
-    # Remove all non-ASCII characters (like emojis or icons)
-    text = re.sub(r'[^\x00-\x7F]+', '', text)
-
     # Additional cleanup
     text = re.sub(r' +', ' ', text)  # Remove multiple spaces
     text = text.strip()
+
+    pattern = r'(?:^|\n)1\s*\n2\s*\n3\s*\n4\s*\n5\s*\n6\s*\n7\s*\n(?:.*\n)*?.*?back less.'
+    text = re.sub(pattern, '', text, flags=re.MULTILINE | re.DOTALL)
 
     return text
 
@@ -32,13 +32,17 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
     extracted_text = extract_text(pdf_stream)
     extracted_text = clean_extracted_text(extracted_text)
 
-    # Define patterns for each section using regular expressions
+    """
+        Define patterns for each section using regular expressions
+        \s* matches zero or more spaces 
+        \s*(.*?)\s* matches any text between two sections
+    """
     patterns = {
         "PRIIPSKIDTypeOption": r"Type:\s*(.*?)\s*(?=\bTerm\b)",
-        "PRIIPsKIDTerm": r"Term:\s*(.*?)\s*(?=\b(Objective|Objectives)\b)",
+        "PRIIPsKIDTerm": r"Term:\s*(.*?)\s*(?=Objective[s]?:)",
         "PRIIPsKIDObjective": r"Objective[s]?:\s*(.*?)\s*(?=\b(Intended investor|Dealing Frequency|Fund Currency|Investment Policy)\b|\bWhat are the risks\b)",
-        "PRIIPsKIDTargetMarket": r"Intended\s*(?:investor|Investor|Retail\s*Investor):\s*(.*?)\s*(?=\b(What are the risks|Purchase and Repurchase|Risk Indicator)\b)",
-        "PRIIPsKIDOtherRisks": r"What are the risks and what could I get in return\?\s*(.*?)\s*(?=\bWhat happens if\b)",
+        "PRIIPsKIDTargetMarket": r"Intended\s*(?:investor\s*|investors\s*|Investor\s*|Investors\s*|Retail\s*Investor\s*):\s*(.*?)\s*(?=\b(What are the risks|Purchase and Repurchase|Risk Indicator)\b)",
+        "PRIIPsKIDOtherRisks": r"Risk Indicator\s*[:]?\s*(.*?)\s*(?=\bPerformance Scenarios\b)",
         "PRIIPsKIDUnableToPayOut": r"What happens if.*?\s*(.*?)\s*(?=\bWhat are the costs\b)",
         "PRIIPsKIDTakeMoneyOutEarly": r"How long should I hold it and can I take money out early\?\s*(.*?)\s*(?=\bHow can I complain\b)",
         "PRIIPsKIDComplaints": r"How can I complain\?\s*(.*?)\s*(?=\bOther relevant information\b)",
@@ -47,7 +51,7 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
 
     # Extract the sections
     extracted_sections = {section: re.search(pattern, extracted_text, re.DOTALL).group(1).strip()
-                          if re.search(pattern, extracted_text, re.DOTALL) else "Section not found"
+                          if re.search(pattern, extracted_text, re.DOTALL) else ""
                           for section, pattern in patterns.items()}
 
     return extracted_sections
