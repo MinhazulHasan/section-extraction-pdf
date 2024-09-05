@@ -1,6 +1,23 @@
 from pdfminer.high_level import extract_text
+import pdfplumber
 import re
 import io
+
+
+def decorate_passage(passage: str) -> str:
+    # Remove single newlines that are not preceded by sentence-ending punctuation
+    refined = re.sub(r'(?<![.!?])\n(?!\n)', ' ', passage)
+    # Remove any extra spaces that might have been created
+    refined = re.sub(r' +', ' ', refined)
+    # Ensure there's no extra space or newline at the beginning or end
+    refined = refined.strip()
+    return refined
+
+
+def remove_page_lines(text: str) -> str:
+    # Remove any line containing "Page - " pattern
+    cleaned_text = re.sub(r'^.*Page\s*-\s*\d+.*$\n?', '', text, flags=re.MULTILINE)
+    return cleaned_text
 
 
 def clean_extracted_text(text: str) -> str:
@@ -27,10 +44,21 @@ def clean_extracted_text(text: str) -> str:
 
 
 def extract_pdf_sections(pdf_contents: bytes) -> dict:
-    # Extract text from the PDF
     pdf_stream = io.BytesIO(pdf_contents)
-    extracted_text = extract_text(pdf_stream)
-    extracted_text = clean_extracted_text(extracted_text)
+    print("Extracting sections from the PDF...")
+    # Extract text from the PDF using pdfminer
+    extracted_text_pdfminer = extract_text(pdf_stream)
+    extracted_text_pdfminer = extracted_text_pdfminer.encode('utf-8', errors='ignore').decode('utf-8')
+    extracted_text_pdfminer = clean_extracted_text(extracted_text_pdfminer)
+
+    # Extract text from the PDF using pdfplumber
+    extracted_text_pdfplumber = ""
+    with pdfplumber.open(pdf_stream) as pdf:
+        for page in pdf.pages:
+            extracted_text_pdfplumber += page.extract_text() + "\n"
+
+    extracted_text_pdfplumber = extracted_text_pdfplumber.encode('utf-8', errors='ignore').decode('utf-8')
+    ectracted_text_pdfplumber = clean_extracted_text(extracted_text_pdfplumber)
 
     """
         Define patterns for each section using regular expressions
@@ -46,12 +74,107 @@ def extract_pdf_sections(pdf_contents: bytes) -> dict:
         "PRIIPsKIDUnableToPayOut": r"What happens if.*?\s*(.*?)\s*(?=\bWhat are the costs\b)",
         "PRIIPsKIDTakeMoneyOutEarly": r"How long should I hold it and can I take money out early\?\s*(.*?)\s*(?=\bHow can I complain\b)",
         "PRIIPsKIDComplaints": r"How can I complain\?\s*(.*?)\s*(?=\bOther relevant information\b)",
-        "PRIIPsKIDOtherInfoEU": r"Other relevant information\s*(.*)"
+        "PRIIPsKIDOtherInfoEU": r"(?:.*Other relevant information\s*)+(.*)"
     }
 
-    # Extract the sections
-    extracted_sections = {section: re.search(pattern, extracted_text, re.DOTALL).group(1).strip()
-                          if re.search(pattern, extracted_text, re.DOTALL) else ""
-                          for section, pattern in patterns.items()}
+    # Extract the sections separately
+    extracted_sections_type_option = {}
 
-    return extracted_sections
+    if "PRIIPSKIDTypeOption" in patterns:
+        extracted_sections_type_option["PRIIPSKIDTypeOption"] = (
+            re.search(patterns["PRIIPSKIDTypeOption"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPSKIDTypeOption"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_type_option["PRIIPSKIDTypeOption"] = decorate_passage(extracted_sections_type_option["PRIIPSKIDTypeOption"])
+
+
+    extracted_sections_term = {}
+    if "PRIIPsKIDTerm" in patterns:
+        extracted_sections_term["PRIIPsKIDTerm"] = (
+            re.search(patterns["PRIIPsKIDTerm"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDTerm"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_term["PRIIPsKIDTerm"] = decorate_passage(extracted_sections_term["PRIIPsKIDTerm"])
+
+
+    extracted_sections_objective = {}
+    if "PRIIPsKIDObjective" in patterns:
+        extracted_sections_objective["PRIIPsKIDObjective"] = (
+            re.search(patterns["PRIIPsKIDObjective"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDObjective"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_objective["PRIIPsKIDObjective"] = decorate_passage(extracted_sections_objective["PRIIPsKIDObjective"])
+
+
+    extracted_sections_target_market = {}
+    if "PRIIPsKIDTargetMarket" in patterns:
+        extracted_sections_target_market["PRIIPsKIDTargetMarket"] = (
+            re.search(patterns["PRIIPsKIDTargetMarket"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDTargetMarket"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_target_market["PRIIPsKIDTargetMarket"] = decorate_passage(extracted_sections_target_market["PRIIPsKIDTargetMarket"])
+
+
+    extracted_sections_other_risks = {}
+    if "PRIIPsKIDOtherRisks" in patterns:
+        extracted_sections_other_risks["PRIIPsKIDOtherRisks"] = (
+            re.search(patterns["PRIIPsKIDOtherRisks"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDOtherRisks"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_other_risks["PRIIPsKIDOtherRisks"] = extracted_sections_other_risks["PRIIPsKIDOtherRisks"].replace("!", "")
+        extracted_sections_other_risks["PRIIPsKIDOtherRisks"] = decorate_passage(extracted_sections_other_risks["PRIIPsKIDOtherRisks"])
+
+
+    extracted_sections_unable_to_pay_out = {}
+    if "PRIIPsKIDUnableToPayOut" in patterns:
+        extracted_sections_unable_to_pay_out["PRIIPsKIDUnableToPayOut"] = (
+            re.search(patterns["PRIIPsKIDUnableToPayOut"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDUnableToPayOut"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_unable_to_pay_out["PRIIPsKIDUnableToPayOut"] = decorate_passage(extracted_sections_unable_to_pay_out["PRIIPsKIDUnableToPayOut"])
+
+
+    extracted_sections_take_money_out_early = {}
+    if "PRIIPsKIDTakeMoneyOutEarly" in patterns:
+        extracted_sections_take_money_out_early["PRIIPsKIDTakeMoneyOutEarly"] = (
+            re.search(patterns["PRIIPsKIDTakeMoneyOutEarly"], extracted_text_pdfminer, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDTakeMoneyOutEarly"], extracted_text_pdfminer, re.DOTALL) else ""
+        )
+        extracted_sections_take_money_out_early["PRIIPsKIDTakeMoneyOutEarly"] = decorate_passage(extracted_sections_take_money_out_early["PRIIPsKIDTakeMoneyOutEarly"])
+
+
+    extracted_sections_complaints = {}
+    if "PRIIPsKIDComplaints" in patterns:
+        extracted_sections_complaints["PRIIPsKIDComplaints"] = (
+            re.search(patterns["PRIIPsKIDComplaints"], ectracted_text_pdfplumber, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDComplaints"], ectracted_text_pdfplumber, re.DOTALL) else ""
+        )
+        extracted_sections_complaints["PRIIPsKIDComplaints"] = decorate_passage(extracted_sections_complaints["PRIIPsKIDComplaints"])
+
+
+    extracted_sections_other_info_eu = {}
+    if "PRIIPsKIDOtherInfoEU" in patterns:
+        extracted_sections_other_info_eu["PRIIPsKIDOtherInfoEU"] = (
+            re.search(patterns["PRIIPsKIDOtherInfoEU"], extracted_text_pdfplumber, re.DOTALL).group(1).strip()
+            if re.search(patterns["PRIIPsKIDOtherInfoEU"], extracted_text_pdfplumber, re.DOTALL) else ""
+        )
+        extracted_sections_other_info_eu["PRIIPsKIDOtherInfoEU"] = remove_page_lines(extracted_sections_other_info_eu["PRIIPsKIDOtherInfoEU"])
+
+
+    # Merge the sections
+    merged_sections = {
+        **extracted_sections_type_option,
+        **extracted_sections_term,
+        **extracted_sections_objective,
+        **extracted_sections_target_market,
+        **extracted_sections_other_risks,
+        **extracted_sections_unable_to_pay_out,
+        **extracted_sections_take_money_out_early,
+        **extracted_sections_complaints,
+        **extracted_sections_other_info_eu,
+    }
+
+    for key, value in merged_sections.items():
+        print(f"{key}: {value}\n\n\n")
+
+    return merged_sections

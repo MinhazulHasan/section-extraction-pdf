@@ -23,10 +23,10 @@ async def get_pdf_content(file: UploadFile = File(...)) -> ExtractedSections:
         merged_dict = {**extracted_sections_dict, **extracted_tables_dict}
 
         # Save CSV
-        df = pd.DataFrame(list(merged_dict.items()), columns=['Section', 'Content'])
-        os.makedirs('output', exist_ok=True)
-        csv_path = os.path.join('output', f"{file.filename.replace('.pdf', '.csv')}")
-        df.to_csv(csv_path, index=False)
+        # df = pd.DataFrame(list(merged_dict.items()), columns=['Section', 'Content'])
+        # os.makedirs('output', exist_ok=True)
+        # csv_path = os.path.join('output', f"{file.filename.replace('.pdf', '.csv')}")
+        # df.to_csv(csv_path, index=False)
 
         return JSONResponse(content=merged_dict)
     
